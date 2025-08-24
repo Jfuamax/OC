@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Nom : check_users_MS
+#
+# Description : Surveille les sessions utilisateurs ouvertes et renvoie :
+#	code exit 0 (OK) si :
+#		aucune session ouverte
+#		une seule session ouverte par l'utilisateur indiqué
+#	code exit 2 (CRITICAL) si :
+#		une seule session ouverte par un autre utilisateur que celui indiqué
+#		plusieurs sessions ouvertes (peu importe le ou les utilisateurs)
+#
+# Auteur : Maxime LUSSEAU
+# Version 1.0 - 07/2025
+
+## Définir la langue sur anglais afin d'éviter les problèmes de traduction lors des commandes awk par exemple
+export LANG=en_US.UTF-8
+
+## Fonction pour afficher l'aide
+print_usage() {
+	echo "Usage: $0 -u <utilisateur cible>"
+	echo ""
+	echo "Arguments requis:"
+	echo "  -u <utilisateur cible>		Unique utilisateur autorisé à ouvrir une session"
+}
+
+## Initialisation des variables pour les arguments
+user_target=""
+
+## Analyser les arguments
+# Afficher l'aide si argument inconnu
+while getopts "u:" o; do
+	case "${o}" in
+		u)
+			user_target=${OPTARG}
+			;;
+		*)
+			print_usage
+			exit 2
+			;;
+	esac
+done
+
+## Vérification de la présence de tous les arguments
+# Afficher l'aide si argument manquant
+if [[ -z "$user_target" ]]; then
+	print_usage
+	exit 2
+fi
+
+## Initialisation des variable complémentaires utilisées dans le script
+# Définition du seuil critical
+critical_threshold=2
+
+# Récupération du nom de la machine
+server_name=$(hostname)
+
+# Récupération du nombre de sessions utilisateurs ouvertes
+open_user_sessions=$(who | wc -l)
+
+# Récupération du nombre de sessions utilisateurs ouvertes pour l'utilisateur autorisé à se connecter
+open_user_target_sessions=$(who | grep "^$user_target " | wc -l)
+
+## Exécution du script
+# Renvoyer le code exit 0 (OK) si aucune session utilisateur ouverte
+if [ "$open_user_sessions" -eq 0 ]; then
+	echo "Aucune session utilisateur ouverte sur $server_name"
+	echo "OK"
+	exit 0
+# Renvoyer le code exit 2 (CRITICAL) si au moins une session ouverte mais aucune pour l'utilisateur autorisé
+elif [ "$open_user_target_sessions" -eq 0 ]; then
+	echo "Nombre total de session(s) utilisateur ouverte(s) sur $server_name : $open_user_sessions"
+	echo "Nombre de session(s) pour l'utilisteur $user_target : 0"
+	echo "CRITICAL"
+	exit 2
+# Renvoyer le code ci-dessous si toutes les sessions ouvertes sont pour l'utilisateur autorisé
+elif [ "$open_user_sessions" -eq "$open_user_target_sessions" ]; then
+        echo "Nombre total de session(s) utilisateur ouverte(s) sur $server_name : $open_user_sessions"
+        echo "Nombre de session(s) pour l'utilisteur $user_target : $open_user_target_sessions"
+	# Renvoyer le code exit 2 (CRITICAL) si le nombre de sessions ouvertes est supérieur ou égal au seuil critical
+	if [ "$open_user_sessions" -ge "$critical_threshold" ]; then
+		echo "CRITICAL"
+		exit 2
+	# Renvoyer le code exit 0 (OK) sinon
+	else
+		echo "OK"
+		exit 0
+	fi
+# Renvoyer le code exit 2 (CRITICAL) sinon
+else
+        echo "Nombre total de session(s) utilisateur ouverte(s) sur $server_name : $open_user_sessions"
+        echo "Nombre de session(s) pour l'utilisteur $user_target : $open_user_target_sessions"
+	echo "CRITICAL"
+	exit 2
+fi

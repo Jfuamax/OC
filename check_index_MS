@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# Nom : check_index_MS
+#
+# Description : Vérifie la présence du fichier indiqué et le fonctionnement du HTTP/HTTPS pour l'URL indiqué
+#
+# Auteur : Maxime LUSSEAU
+# Version 1.0 - 07/2025
+
+## Définir la langue sur anglais afin d'éviter les problèmes de traduction lors des commandes awk par exemple
+export LANG=en_US.UTF-8
+
+## Fonction pour afficher l'aide
+print_usage() {
+	echo "Usage: $0 -f <fichier cible> -u <url cible>"
+	echo ""
+	echo "Arguments requis:"
+        echo "  -f <fichier cible>		Fichier dont on vérifie la présence"
+	echo "  -u <utilisateur cible>		URL dont on vérifie le fonctionnement"
+}
+
+## Initialisation des variables pour les arguments
+file_target=""
+url_target=""
+
+## Analyser les arguments
+# Afficher l'aide si argument inconnu
+while getopts "f:u:" o; do
+	case "${o}" in
+                f)
+                        file_target=${OPTARG}
+                        ;;
+		u)
+			url_target=${OPTARG}
+			;;
+		*)
+			print_usage
+			exit 2
+			;;
+	esac
+done
+
+## Vérification de la présence de tous les arguments
+# Afficher l'aide si argument manquant
+if [[ -z "$file_target" ]] || [[ -z "$url_target" ]]; then
+	print_usage
+	exit 2
+fi
+
+## Initialisation des variable utilisées dans le script
+# Récupération du nom de la machine
+server_name=$(hostname)
+
+# Définition des variables pour le fonctionnement du HTTP et HTTPS (1 si OK et 0 sinon)
+test_http=$(wget --spider --server-response --no-http-keep-alive http://$url_target 2>&1 | grep "200 OK" | wc -l)
+test_https=$(wget --spider --server-response --no-http-keep-alive https://$url_target 2>&1 | grep "200 OK" | wc -l)
+
+# Modification des valeurs 0 ou 1 à OUI ou NON
+if [ "$test_http" -eq 1 ]; then
+	test_http="OUI"
+else
+	test_http="NON"
+fi
+
+if [ "$test_https" -eq 1 ]; then
+        test_https="OUI"
+else
+        test_https="NON"
+fi
+
+## Exécution du script
+# Renvoyer le code ci-dessous si le fichier est présent sur la machine
+if [ -f "$file_target"  ]; then
+	echo "Le fichier $file_target est présent sur $server_name"
+	# Renvoyer le code exit 0 (OK) si HTTP et HTTPS OK
+	if [ "$test_http" = "OUI" -a "$test_https" = "OUI" ]; then
+		echo "HTTP  : $test_http"
+                echo "HTTPS : $test_https"
+		echo "OK"
+		exit 0
+	# Renvoyer le code exit 2 (CRITICAL) sinon
+	else
+                echo "HTTP  : $test_http"
+                echo "HTTPS : $test_https"
+                echo "CRITICAL"
+                exit 2
+	fi
+# Renvoyer le code exit 2 (CRITICAL) sinon
+else
+	echo "Le fichier $file_target n'existe pas sur $server_name"
+	echo "CRITICAL"
+	exit 2
+fi

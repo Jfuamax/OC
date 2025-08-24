@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# Nom : check_CPU_MS
+#
+# Description : Récupère le charge CPU et les valeurs du load average (1min, 5min et 15min)
+# et renvoie le code exit 0 (OK), 1 (WARNING) et 2 CRITICAL) suivant les seuils indiqués
+#
+# Note : La charge CPU est utilisée en complément du load average afin de s'assurer que
+# les valeurs du load average dépassant les seuils sont provoquées par une activité du CPU
+#
+# Auteur : Maxime LUSSEAU
+# Version 1.0 - 07/2025
+#
+# Dépendances :
+# mpstat (sudo apt install sysstat)
+# bc (sudo install bc)
+
+## Définir la langue sur anglais afin d'éviter les problèmes de traduction lors des commandes awk par exemple
+export LANG=en_US.UTF-8
+
+# Fonction pour afficher l'aide
+print_usage() {
+	echo "Usage: $0 -w <Seuil Warning> -c <Seuil Critical>"
+	echo ""
+	echo "Arguments requis:"
+        echo "  -w <Seuil Warning>	Charge CPU (en %) sur 1min, 5min et 15min avant déclenchement Warning (Nombres entiers séparées par ',')"
+        echo "  -c <Seuil Critical>	Charge CPU (en %) sur 1min, 5min et 15min avant déclenchement Critical (Nombres entiers séparées par ',')"
+}
+
+## Initialisation des variables pour les arguments
+warning_threshold_1=""
+warning_threshold_5=""
+warning_threshold_15=""
+critical_threshold_1=""
+critical_threshold_5=""
+critical_threshold_15=""
+
+## Analyser les arguments
+# Afficher l'aide si format incorrect ou argument inconnu
+while getopts "w:c:" o; do
+	case "${o}" in
+		w)
+			if [[ "${OPTARG}" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]]; then
+				IFS=',' read -r warning_threshold_1 warning_threshold_5 warning_threshold_15 <<< "$OPTARG"
+			else
+				print_usage
+                        	exit 2
+			fi
+			;;
+                c)
+                        if [[ "${OPTARG}" =~ ^[0-9]+,[0-9]+,[0-9]+$ ]]; then
+                                IFS=',' read -r critical_threshold_1 critical_threshold_5 critical_threshold_15 <<< "$OPTARG"
+                        else
+                                print_usage
+                                exit 2
+                        fi
+                        ;;
+		*)
+			print_usage
+			exit 2
+			;;
+	esac
+done
+
+## Vérification de la présence de tous les arguments
+# Afficher l'aide si arguments manquants
+if [[ -z "$warning_threshold_1" ]] || [[ -z "$critical_threshold_1" ]]; then
+	print_usage
+	exit 2
+fi
+
+## Vérification des valeurs des arguments
+# Afficher l'aide si :
+# Le seuil le plus faible est inférieur à 0 ou le seuil le plus élevé est supérieur à 100
+if [[ "$warning_threshold_15" -lt 0 ]] || [[ "$critical_threshold_1" -gt 100 ]]; then
+        print_usage
+        exit 2
+# Si un seuil warning est supérieur au seuil critical
+elif [[ "$warning_threshold_15" -gt "$critical_threshold_15" ]] || [[ "$warning_threshold_5" -gt "$critical_threshold_5" ]] || [[ "$warning_threshold_1" -gt "$critical_threshold_1" ]]; then
+        print_usage
+        exit 2
+# Si un seuil 15min est supérieur au seuil 5min ou un seuil 5min est supérieur au seuil 1min (warning ou critical)
+elif [[ "$warning_threshold_15" -gt "$warning_threshold_5" ]] || [[ "$warning_threshold_5" -gt "$warning_threshold_1" ]] || [[ "$critical_threshold_15" -gt "$critical_threshold_5" ]] || [[ "$critical_threshold_5" -gt "$critical_threshold_1" ]]; then
+        print_usage
+        exit 2
+fi
+
+## Initialisation des variables complémentaires utilisées dans le script
+# Récupération du nombre de processeurs sur la machine
+nb_CPU=$(grep -c ^processor /proc/cpuinfo)
+
+# Récupération de la charge CPU moyenne pendant 1s (en %)
+load_CPU=$(/usr/bin/mpstat 1 1 | awk '$1~/^Average/{print 100 - $NF}')
+
+# Récupération des valeurs de load average diviser par le nombre de processeurs (en %)
+read -r load_avg_1 load_avg_5 load_avg_15 _ _ <<< $(awk -v nb_CPU="$nb_CPU" '{print $1 * 100 / nb_CPU, $2 * 100 / nb_CPU, $3 * 100 / nb_CPU}' /proc/loadavg)
+
+## Exécution du script
+# Renvoyer le code exit 2 (CRITICAL) si un des seuils critical est dépassé
+if (( $(echo "$load_CPU >= $critical_threshold_1 && $load_avg_1 >= $critical_threshold_1" | bc -l) )) || (( $(echo "$load_CPU >= $critical_threshold_5 && $load_avg_5 >= $critical_threshold_5" | bc -l) )) || (( $(echo "$load_CPU >= $critical_threshold_15 && $load_avg_15 >= $critical_threshold_15" | bc -l) )); then
+	echo "Loadavg : $load_avg_1 % sur 1min / $load_avg_5 % sur 5min / $load_avg_15 % sur 15min"
+        echo "Charge CPU : $load_CPU %"
+	echo "CRITICAL"
+	exit 2
+# Renvoyer le code exit 1 (WARNING) si un des seuils warning est dépassé
+elif (( $(echo "$load_CPU >= $warning_threshold_1 && $load_avg_1 >= $warning_threshold_1" | bc -l) )) || (( $(echo "$load_CPU >= $warning_threshold_5 && $load_avg_5 >= $warning_threshold_5" | bc -l) )) || (( $(echo "$load_CPU >= $warning_threshold_15 && $load_avg_15 >= $warning_threshold_15" | bc -l) )); then
+        echo "Loadavg : $load_avg_1 % sur 1min / $load_avg_5 % sur 5min / $load_avg_15 % sur 15min"
+        echo "Charge CPU : $load_CPU %"
+        echo "WARNING"
+        exit 1
+# Renvoyer le code exit 0 (OK) sinon
+else
+        echo "Loadavg : $load_avg_1 % sur 1min / $load_avg_5 % sur 5min / $load_avg_15 % sur 15min"
+        echo "Charge CPU : $load_CPU %"
+        echo "OK"
+        exit 0
+fi

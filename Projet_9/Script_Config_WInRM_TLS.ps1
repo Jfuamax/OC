@@ -5,18 +5,16 @@
 .DESCRIPTION
     Ce script supprime les éventuelles configurations existantes pour WInRM et réalise la configuration pour une utilisation de WInRM en HTTPS à partir du certificat de l'ordinateur obtenu auprès du serveur ADCS.
 
-.USAGE
+.EXAMPLE
     PS C:\> .\Script_Config_WInRM_TLS.ps1
 
 .NOTES
-    Version		: 1.0
-    Auteur		: Maxime Lusseau
+    Version				: 1.0
+    Auteur				: Maxime Lusseau
     Date de création	: 09/2025
-    Organisation	: Barzini
-    Github		: https://github.com/Jfuamax/OC/tree/main/Projet_9
-
-.REMARQUES
-    Une GPO est configurée pour activer la transcription Powershell et les fichiers de transcription sont stockés dans le dossier : \\SRV-TST-001\Transcripts$
+    Organisation		: Barzini
+    Github				: https://github.com/Jfuamax/OC/tree/main/Projet_9
+	Remarques			: Une GPO est configurée pour activer la transcription Powershell et les fichiers de transcription sont stockés dans le dossier : \\SRV-TST-001\Transcripts$
 
 .HISTORIQUE DES VERSIONS
     1.0		09/2025		Version initiale
@@ -43,4 +41,5 @@ if ($certThumbprint){
 }
 else {
 	Write-Error "Certificat introuvable"
+
 }

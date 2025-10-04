@@ -11,13 +11,14 @@
 # Usage
 #	./Script_Linux_Montage_Partages.sh
 # Notes
-#	Version 	: 1.0
-# 	Auteur 		: Maxime Lusseau
-# 	Date 		: 09/2025
+#	Version 		: 1.0
+# 	Auteur 			: Maxime Lusseau
+# 	Date 			: 09/2025
 #	Organisation	: Barzini
+#   Github			: https://github.com/Jfuamax/OC/tree/main/Projet_9
 #
 # Historique des versions
-#	1.0	09/2025		Version initiale
+#	1.0		09/2025		Version initiale
 #
 # Dépendances
 #	- krb5-user

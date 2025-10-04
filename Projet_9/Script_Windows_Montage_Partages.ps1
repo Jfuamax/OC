@@ -9,14 +9,12 @@
     PS C:\> .\Script_Windows_Montage_Partages.ps1
 
 .NOTES
-    Version		: 1.0
-    Auteur		: Maxime Lusseau
+    Version				: 1.0
+    Auteur				: Maxime Lusseau
     Date de création	: 09/2025
-    Organisation	: Barzini
-    Github		: https://github.com/Jfuamax/OC/tree/main/Projet_9
-
-.REMARQUES
-    Une GPO est configurée pour activer la transcription Powershell et les fichiers de transcription sont stockés dans le dossier : \\SRV-TST-001\Transcripts$
+    Organisation		: Barzini
+    Github				: https://github.com/Jfuamax/OC/tree/main/Projet_9
+	Remarques			: Une GPO est configurée pour activer la transcription Powershell et les fichiers de transcription sont stockés dans le dossier : \\SRV-TST-001\Transcripts$
 
 .HISTORIQUE DES VERSIONS
     1.0		09/2025		Version initiale
@@ -86,3 +84,4 @@ Foreach($DriveName in $MapDriveLetter.Keys){
 	}
 
 }
+

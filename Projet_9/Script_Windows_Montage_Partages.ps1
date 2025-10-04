@@ -5,7 +5,7 @@
 .DESCRIPTION
     Ce script supprime tous les partages qui utilisent les lettres reservées pour les dossiers des services et le dossier personnel (définies dans les variables $Letter_Perso et $MapDriveLetter) puis réalise les montages du dossier personnel et des dossiers des services accessibles à l'utilisateur (suivant son appartenance aux différents groupes GDL_DATA_XXX_RO/RW).
 
-.USAGE
+.EXAMPLE
     PS C:\> .\Script_Windows_Montage_Partages.ps1
 
 .NOTES
@@ -84,4 +84,5 @@ Foreach($DriveName in $MapDriveLetter.Keys){
 			Write-Error "Erreur lors de la création du partage pour $DriveName avec la lettre $($MapDriveLetter.$DriveName) : $_"
 		}
 	}
+
 }

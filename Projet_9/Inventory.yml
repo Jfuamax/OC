@@ -1,0 +1,16 @@
+all:
+  children:
+    windows:
+      vars:
+        ansible_connection: winrm
+        ansible_winrm_transport: kerberos
+        ansible_winrm_scheme: https
+        ansible_winrm_port: 5986
+      hosts:
+        Machine_W11-TEST01:
+          ansible_host: vm-w11-test01.barzini.internal
+
+    ubuntu:
+      hosts:
+        Machine_UBU-TEST01:
+          ansible_host: vm-ubu-test04.barzini.internal

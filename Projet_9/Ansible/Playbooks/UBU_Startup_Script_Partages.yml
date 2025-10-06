@@ -1,0 +1,57 @@
+---
+- name: Copier et configurer le lancement à l'ouverture de session du script de montage des partages
+  hosts: ubuntu
+  become: yes
+  gather_facts: no
+
+  vars:
+    script_name: Script_Linux_Montage_Partages.sh
+    logfile_name: Script_Linux_Montage_Partages.log
+    gid_users: "utilisateurs du domaine"
+
+  tasks:
+  - name: Copier le script sur la machine distante
+    ansible.builtin.copy:
+      src: "/home/BARZINI/admin.lusseau/ansible/{{ script_name }}"
+      dest: "/usr/local/bin/{{ script_name }}"
+      owner: root
+      group: "{{ gid_users }}"
+      mode: '0750'
+
+  - name: Créer le dossier pour y inclure le fichier de logs générés par le script
+    ansible.builtin.file:
+      path: /var/log/barzini_scripts
+      owner: root
+      group: "{{ gid_users }}"
+      state: directory
+      mode: '0750'
+
+  - name: Créer le fichier pour les logs générés par le script
+    ansible.builtin.file:
+      path: "/var/log/barzini_scripts/{{ logfile_name }}"
+      owner: root
+      group: "{{ gid_users }}"
+      state: touch
+      mode: '0760'
+
+  - name: Ajouter le lancement automatique du script (si présent) dans /etc/profile
+    ansible.builtin.blockinfile:
+      path: /etc/profile
+      state: present
+      block: |
+        # Lancement du script de montage des dossiers partagés
+        if [ -f "/usr/local/bin/{{ script_name }}" ]; then
+          "/usr/local/bin/{{ script_name }}" &
+        fi
+
+  - name: Mettre à jour le cache APT (si dernière éxecution > 1h)
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+
+  - name: Installer les prérequis pour le montage des partages
+    ansible.builtin.apt:
+      pkg:
+      - krb5-user
+      - cifs-utils
+      - keyutils

@@ -1,0 +1,20 @@
+---
+- name: Installer des MAJ Windows
+  hosts: windows
+  gather_facts: no
+
+  tasks:
+  - name: Rechercher les MAJ disponibles
+    ansible.windows.win_updates:
+      category_names: '*'
+      state: searched
+    register: updates_result
+
+  - name: Afficher la liste des MAJ disponibles
+    ansible.builtin.debug:
+      msg: "{{ updates_result.updates | dict2items | map(attribute='value.title') | list }}"
+
+  - name: Installer toutes les MAJ et redémarrer si nécessaire
+    ansible.windows.win_updates:
+      category_names: '*'
+      reboot: true

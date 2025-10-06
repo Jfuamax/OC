@@ -1,0 +1,10 @@
+---
+- name: Mise en place du script powershell pour le montage des partages réseaux à l'ouverture de session
+  hosts: windows
+  gather_facts: no
+
+  tasks:
+  - name: Copier le fichier .bat permettant le lancement du script powershell
+    ansible.windows.win_copy:
+      src: Lancer_Script.bat
+      dest: C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp

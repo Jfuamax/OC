@@ -1,0 +1,25 @@
+---
+- name: Installer l'agent GLPI à partir du .msi
+  hosts: windows
+  gather_facts: no
+
+  tasks:
+    - name: Créer le dossier \Temp\ pour y télécharger les fichiers
+      ansible.windows.win_file:
+        path: C:\Temp\
+        state: directory
+
+    - name: Télécharger le .msi
+      ansible.windows.win_get_url:
+        url: https://github.com/glpi-project/glpi-agent/releases/download/1.15/GLPI-Agent-1.15-x64.msi
+        dest: C:\Temp\
+        force: false
+
+    - name: Installer le .msi
+      ansible.windows.win_package:
+        path: C:\temp\GLPI-Agent-1.15-x64.msi
+        state: present
+        arguments:
+          - /quiet
+          - SERVER=https://glpi.barzini.internal/front/inventory.php
+          - RUNNOW=1

@@ -1,0 +1,25 @@
+---
+- name: Installer des MAJ UBUNTU
+  hosts: ubuntu
+  become: yes
+  gather_facts: no
+
+  tasks:
+  - name: Mettre à jour le cache APT
+    ansible.builtin.apt:
+      update_cache: yes
+
+  - name: Lister les MAJ disponibles (simulation de l'installation des MAJ)
+    ansible.builtin.apt:
+      upgrade: dist
+    check_mode: yes
+    register: apt_upgrade
+
+  - name: Afficher les MAJ disponibles
+    ansible.builtin.debug:
+      var: apt_upgrade.stdout_lines
+    when: apt_upgrade.stdout_lines is defined
+
+  - name: Installer les MAJ
+    ansible.builtin.apt:
+      upgrade: dist

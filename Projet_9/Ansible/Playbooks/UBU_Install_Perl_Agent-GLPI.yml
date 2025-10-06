@@ -1,0 +1,20 @@
+---
+- name: Installer l'agent GLPI
+  hosts: ubuntu
+  become: yes
+  gather_facts: no
+
+  tasks:
+  - name: Mettre à jour le cache APT (si dernière éxecution > 1h)
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+
+  - name: Installer perl
+    ansible.builtin.apt:
+      name: perl
+
+  - name: Lancer le script d'installation de l'agent GLPI
+    ansible.builtin.script: /home/BARZINI/admin.lusseau/ansible/glpi-agent-1.15-linux-installer.pl -s https://glpi.barzini.internal/front/inventory.php --runnow --install
+    args:
+      executable: perl

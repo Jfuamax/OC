@@ -1,0 +1,16 @@
+---
+- name: Installer CCA via Chocolatey
+  hosts: windows
+  gather_facts: no
+
+  tasks:
+    - name: Installer CCA via Chocolatey
+      win_chocolatey:
+        name: colour-contrast-analyser
+        state: present
+
+    - name: Créer le raccourci sur le bureau
+      community.windows.win_shortcut:
+        src: C:\ProgramData\chocolatey\lib\colour-contrast-analyser\tools\cca.exe
+        dest: C:\Users\Public\Desktop\CCA.lnk
+        icon: C:\ProgramData\chocolatey\lib\colour-contrast-analyser\tools\cca.exe,0

@@ -1,0 +1,15 @@
+---
+- name: Installer le logiciel Kontrast
+  hosts: ubuntu
+  become: yes
+  gather_facts: no
+
+  tasks:
+  - name: Mettre à jour le cache APT (si dernière éxecution > 1h)
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+
+  - name: Installer Kontrast
+    ansible.builtin.apt:
+      name: kontrast
